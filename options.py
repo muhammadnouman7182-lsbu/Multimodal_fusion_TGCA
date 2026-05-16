@@ -15,6 +15,10 @@ def parse_args():
     parser.add_argument('--model_name', type=str, default='omic', help='mode')
     parser.add_argument('--use_vgg_features', type=int, default=0, help='Use pretrained embeddings')
     parser.add_argument('--use_rnaseq', type=int, default=0, help='Use RNAseq data.')
+    parser.add_argument('--use_uni', type=int, default=0, help='Use UNI foundation model as histology encoder')
+    parser.add_argument('--use_transformer', type=int, default=0, help='Use Transformer for genomics encoding')
+    parser.add_argument('--use_disentanglement', type=int, default=0, help='Use explicit latent disentanglement')
+    parser.add_argument('--unfreeze_path', type=int, default=0, help='Unfreeze pathology encoder for fine-tuning')
     
     parser.add_argument('--task', type=str, default='surv', help='surv | grad')
     parser.add_argument('--useRNA', type=int, default=0) # Doesn't work at the moment...:(
@@ -46,7 +50,7 @@ def parse_args():
     parser.add_argument('--lambda_nll', type=float, default=1)
 
 
-    parser.add_argument('--fusion_type', type=str, default="pofusion", help='concat | pofusion')
+    parser.add_argument('--fusion_type', type=str, default="pofusion", help='concat | pofusion | crossattn')
     parser.add_argument('--skip', type=int, default=0)
     parser.add_argument('--use_bilinear', type=int, default=1)
     parser.add_argument('--path_gate', type=int, default=1)

@@ -28,7 +28,9 @@ from sklearn.model_selection import train_test_split, KFold
 from sklearn.metrics import average_precision_score, auc, f1_score, roc_curve, roc_auc_score
 from sklearn.preprocessing import LabelBinarizer
 
-from scipy import interp
+
+# from scipy import interp
+
 mpl.rcParams['axes.linewidth'] = 3 #set the value globally
 
 # Torch
@@ -53,6 +55,8 @@ def regularize_weights(model, reg_type=None):
             l1_reg = torch.abs(W).sum()
         else:
             l1_reg = l1_reg + torch.abs(W).sum() # torch.abs(W).sum() is equivalent to W.norm(1)
+    if l1_reg is None:
+        l1_reg = 0
     return l1_reg
 
 
@@ -71,6 +75,8 @@ def regularize_path_weights(model, reg_type=None):
         else:
             l1_reg = l1_reg + torch.abs(W).sum() # torch.abs(W).sum() is equivalent to W.norm(1)
 
+    if l1_reg is None:
+        l1_reg = 0
     return l1_reg
 
 
@@ -168,8 +174,11 @@ def regularize_MM_weights(model, reg_type=None):
             else:
                 l1_reg = l1_reg + torch.abs(W).sum() # torch.abs(W).sum() is equivalent to W.norm(1)
         
+    if l1_reg is None:
+        l1_reg = 0
+    if l1_reg is None:
+        l1_reg = 0
     return l1_reg
-
 
 def regularize_MM_omic(model, reg_type=None):
     l1_reg = None
@@ -181,6 +190,8 @@ def regularize_MM_omic(model, reg_type=None):
             else:
                 l1_reg = l1_reg + torch.abs(W).sum() # torch.abs(W).sum() is equivalent to W.norm(1)
 
+    if l1_reg is None:
+        l1_reg = 0
     return l1_reg
 
 
@@ -336,7 +347,36 @@ def mixed_collate(batch):
     elem = batch[0]
     elem_type = type(elem)    
     transposed = zip(*batch)
-    return [Batch.from_data_list(samples, []) if type(samples[0]) is torch_geometric.data.data.Data else default_collate(samples) for samples in transposed]
+    
+    new_batch = []
+    for samples in transposed:
+        if type(samples[0]) is torch_geometric.data.data.Data:
+            processed_samples = []
+            for d in samples:
+                # Safer check: use __dict__ or try-except to avoid RuntimeError from older PyG objects
+                is_old = False
+                try:
+                    # Accessing _store directly might trigger the error via __getattr__
+                    # We check if 'x' exists as a proxy for a valid Data object
+                    _ = d.x
+                except Exception:
+                    is_old = True
+
+                if is_old:
+                    # Migrate old Data object to new version by reconstructing it
+                    from torch_geometric.data import Data
+                    # Use a safe way to get data attributes if possible
+                    # If to_dict() fails, we try to extract from __dict__
+                    try:
+                        d_dict = d.to_dict()
+                    except Exception:
+                        d_dict = {k: v for k, v in d.__dict__.items() if not k.startswith('_')}
+                    d = Data(**d_dict)
+                processed_samples.append(d)
+            new_batch.append(Batch.from_data_list(processed_samples, []))
+        else:
+            new_batch.append(default_collate(samples))
+    return new_batch
 
 
 
@@ -837,7 +877,7 @@ def makeAUROCPlot(ckpt_name='./checkpoints/grad_15/', model_list=['path', 'omic'
                     fpr, tpr, thresh = roc_curve(grade_oh[:,i], grade_pred[:,i], drop_intermediate=False)
                     aucrocs.append(auc(fpr, tpr)) # https://scikit-learn.org/stable/auto_examples/model_selection/plot_roc.html
                     rocaucs.append(roc_auc_score(grade_oh[:,i], grade_pred[:,i])) # https://scikit-learn.org/stable/modules/generated/sklearn.metrics.roc_auc_score.html#sklearn.metrics.roc_auc_score
-                    tprs.append(interp(mean_fpr, fpr, tpr))
+                    tprs.append(np.interp(mean_fpr, fpr, tpr))
                     tprs[-1][0] = 0.0
                 else:
                     # A "micro-average": quantifying score on all classes jointly
@@ -845,7 +885,7 @@ def makeAUROCPlot(ckpt_name='./checkpoints/grad_15/', model_list=['path', 'omic'
                     fpr, tpr, thresh = roc_curve(grade_oh.ravel(), grade_pred.ravel())
                     aucrocs.append(auc(fpr, tpr))
                     rocaucs.append(roc_auc_score(grade_oh, grade_pred, avg))
-                    tprs.append(interp(mean_fpr, fpr, tpr))
+                    tprs.append(np.interp(mean_fpr, fpr, tpr))
                     tprs[-1][0] = 0.0
 
             mean_tpr = np.mean(tprs, axis=0)

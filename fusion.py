@@ -190,3 +190,36 @@ class TrilinearFusion_B(nn.Module):
         if self.skip: out = torch.cat((out, o1, o2, o3), 1)
         out = self.encoder2(out)
         return out
+
+
+class CrossAttnFusion(nn.Module):
+    def __init__(self, path_dim=32, omic_dim=32, hidden=64):
+        super().__init__()
+        self.proj_p = nn.Linear(path_dim, hidden)
+        self.proj_o = nn.Linear(omic_dim, hidden)
+        self.attn = nn.MultiheadAttention(hidden, num_heads=4, batch_first=True)
+        self.fc = nn.Sequential(
+            nn.Linear(hidden + path_dim + omic_dim, 64), nn.ReLU(), nn.Dropout(0.25)
+        )
+        
+    def forward(self, path_emb, omic_emb, grph_emb=None):  # ignore graph for simplicity
+        p = self.proj_p(path_emb).unsqueeze(1)  # [B,1,hidden]
+        o = self.proj_o(omic_emb).unsqueeze(1)
+        attn_out, _ = self.attn(p, o, o)  # pathology queries omic
+        fused = torch.cat([attn_out.squeeze(1), path_emb, omic_emb], dim=1)
+        return self.fc(fused)
+
+
+class ConcatFusion(nn.Module):
+    def __init__(self, dim1=32, dim2=32, mmhid=64, dropout_rate=0.25):
+        super(ConcatFusion, self).__init__()
+        self.encoder = nn.Sequential(
+            nn.Linear(dim1 + dim2, mmhid),
+            nn.ReLU(),
+            nn.Dropout(p=dropout_rate)
+        )
+
+    def forward(self, vec1, vec2):
+        combined = torch.cat([vec1, vec2], dim=1)
+        out = self.encoder(combined)
+        return out

@@ -44,30 +44,30 @@ class PathgraphomicDatasetLoader(Dataset):
         single_t = torch.tensor(self.t[index]).type(torch.FloatTensor)
         single_g = torch.tensor(self.g[index]).type(torch.LongTensor)
 
-        if self.mode == "path" or self.mode == 'pathpath':
+        if self.mode == "path" or self.mode == 'pathpath' or self.mode == 'A':
             single_X_path = Image.open(self.X_path[index]).convert('RGB')
             return (self.transforms(single_X_path), 0, 0, single_e, single_t, single_g)
-        elif self.mode == "graph" or self.mode == 'graphgraph':
-            single_X_grph = torch.load(self.X_grph[index])
+        elif self.mode == "graph" or self.mode == 'graphgraph' or self.mode == 'B':
+            single_X_grph = torch.load(self.X_grph[index], weights_only=False)
             return (0, single_X_grph, 0, single_e, single_t, single_g)
-        elif self.mode == "omic" or self.mode == 'omicomic':
+        elif self.mode == "omic" or self.mode == 'omicomic' or self.mode == 'C':
             single_X_omic = torch.tensor(self.X_omic[index]).type(torch.FloatTensor)
             return (0, 0, single_X_omic, single_e, single_t, single_g)
-        elif self.mode == "pathomic":
+        elif self.mode == "pathomic" or self.mode == 'AC':
             single_X_path = Image.open(self.X_path[index]).convert('RGB')
             single_X_omic = torch.tensor(self.X_omic[index]).type(torch.FloatTensor)
             return (self.transforms(single_X_path), 0, single_X_omic, single_e, single_t, single_g)
-        elif self.mode == "graphomic":
-            single_X_grph = torch.load(self.X_grph[index])
+        elif self.mode == "graphomic" or self.mode == 'BC':
+            single_X_grph = torch.load(self.X_grph[index], weights_only=False)
             single_X_omic = torch.tensor(self.X_omic[index]).type(torch.FloatTensor)
             return (0, single_X_grph, single_X_omic, single_e, single_t, single_g)
-        elif self.mode == "pathgraph":
+        elif self.mode == "pathgraph" or self.mode == 'AB':
             single_X_path = Image.open(self.X_path[index]).convert('RGB')
-            single_X_grph = torch.load(self.X_grph[index])
+            single_X_grph = torch.load(self.X_grph[index], weights_only=False)
             return (self.transforms(single_X_path), single_X_grph, 0, single_e, single_t, single_g)
-        elif self.mode == "pathgraphomic":
+        elif self.mode == "pathgraphomic" or self.mode == 'ABC':
             single_X_path = Image.open(self.X_path[index]).convert('RGB')
-            single_X_grph = torch.load(self.X_grph[index])
+            single_X_grph = torch.load(self.X_grph[index], weights_only=False)
             single_X_omic = torch.tensor(self.X_omic[index]).type(torch.FloatTensor)
             return (self.transforms(single_X_path), single_X_grph, single_X_omic, single_e, single_t, single_g)
 
@@ -96,30 +96,34 @@ class PathgraphomicFastDatasetLoader(Dataset):
         single_t = torch.tensor(self.t[index]).type(torch.FloatTensor)
         single_g = torch.tensor(self.g[index]).type(torch.LongTensor)
 
-        if self.mode == "path" or self.mode == 'pathpath':
-            single_X_path = torch.tensor(self.X_path[index]).type(torch.FloatTensor).squeeze(0)
+        if self.mode == "path" or self.mode == 'pathpath' or self.mode == 'A':
+            x_path = self.X_path[index]
+            if isinstance(x_path, str) and x_path.endswith('.pt'):
+                single_X_path = torch.load(x_path, weights_only=False).type(torch.FloatTensor)
+            else:
+                single_X_path = torch.tensor(x_path).type(torch.FloatTensor).squeeze(0)
             return (single_X_path, 0, 0, single_e, single_t, single_g)
-        elif self.mode == "graph" or self.mode == 'graphgraph':
-            single_X_grph = torch.load(self.X_grph[index])
+        elif self.mode == "graph" or self.mode == 'graphgraph' or self.mode == 'B':
+            single_X_grph = torch.load(self.X_grph[index], weights_only=False)
             return (0, single_X_grph, 0, single_e, single_t, single_g)
-        elif self.mode == "omic" or self.mode == 'omicomic':
+        elif self.mode == "omic" or self.mode == 'omicomic' or self.mode == 'C':
             single_X_omic = torch.tensor(self.X_omic[index]).type(torch.FloatTensor)
             return (0, 0, single_X_omic, single_e, single_t, single_g)
-        elif self.mode == "pathomic":
+        elif self.mode == "pathomic" or self.mode == 'AC':
             single_X_path = torch.tensor(self.X_path[index]).type(torch.FloatTensor).squeeze(0)
             single_X_omic = torch.tensor(self.X_omic[index]).type(torch.FloatTensor)
             return (single_X_path, 0, single_X_omic, single_e, single_t, single_g)
-        elif self.mode == "graphomic":
-            single_X_grph = torch.load(self.X_grph[index])
+        elif self.mode == "graphomic" or self.mode == 'BC':
+            single_X_grph = torch.load(self.X_grph[index], weights_only=False)
             single_X_omic = torch.tensor(self.X_omic[index]).type(torch.FloatTensor)
             return (0, single_X_grph, single_X_omic, single_e, single_t, single_g)
-        elif self.mode == "pathgraph":
+        elif self.mode == "pathgraph" or self.mode == 'AB':
             single_X_path = torch.tensor(self.X_path[index]).type(torch.FloatTensor).squeeze(0)
-            single_X_grph = torch.load(self.X_grph[index])
+            single_X_grph = torch.load(self.X_grph[index], weights_only=False)
             return (single_X_path, single_X_grph, 0, single_e, single_t, single_g)
-        elif self.mode == "pathgraphomic":
+        elif self.mode == "pathgraphomic" or self.mode == 'ABC':
             single_X_path = torch.tensor(self.X_path[index]).type(torch.FloatTensor).squeeze(0)
-            single_X_grph = torch.load(self.X_grph[index])
+            single_X_grph = torch.load(self.X_grph[index], weights_only=False)
             single_X_omic = torch.tensor(self.X_omic[index]).type(torch.FloatTensor)
             return (single_X_path, single_X_grph, single_X_omic, single_e, single_t, single_g)
 

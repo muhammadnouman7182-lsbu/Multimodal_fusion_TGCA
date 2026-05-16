@@ -30,6 +30,24 @@ data_cv_path = '%s/splits/gbmlgg15cv_%s_%d_%d_%d%s.pkl' % (opt.dataroot, roi_dir
 print("Loading %s" % data_cv_path)
 data_cv = pickle.load(open(data_cv_path, 'rb'))
 data_cv_splits = data_cv['cv_splits']
+
+### Auto-detect omic input size from data (handles RNA-Seq dimensionality change)
+try:
+    first_split = next(iter(data_cv_splits.values()))
+    # navigate nested structure: data_cv_splits[k] -> {'train': {..., 'x_omic': ...}, 'test': {...}}
+    first_omic = first_split.get('train', first_split).get('x_omic')
+    if first_omic is not None:
+        import numpy as np
+        first_omic = np.array(first_omic)
+        detected_omic_size = first_omic.shape[1]
+        if detected_omic_size != opt.input_size_omic:
+            print("Auto-updating input_size_omic: %d -> %d" % (opt.input_size_omic, detected_omic_size))
+            opt.input_size_omic = detected_omic_size
+    else:
+        print("Warning: Could not find x_omic in data structure, using input_size_omic=%d" % opt.input_size_omic)
+except Exception as e:
+    print("Could not auto-detect omic size:", e)
+
 results = []
 
 ### 3. Sets-Up Main Loop

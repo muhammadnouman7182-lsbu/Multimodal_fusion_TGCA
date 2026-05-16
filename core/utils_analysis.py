@@ -28,7 +28,9 @@ from sklearn.model_selection import train_test_split, KFold
 from sklearn.metrics import average_precision_score, auc, f1_score, roc_curve, roc_auc_score
 from sklearn.preprocessing import LabelBinarizer
 
-from scipy import interp
+
+# from scipy import interp
+
 mpl.rcParams['axes.linewidth'] = 3 #set the value globally
 
 def natural_sort(l): 
@@ -178,7 +180,7 @@ def makeAUROCPlot(ckpt_name='./checkpoints/TCGA_GBMLGG/grad_15/', model_list=['p
                     fpr, tpr, thresh = roc_curve(y_label[:,i], y_pred[:,i], drop_intermediate=False)
                     aucrocs.append(auc(fpr, tpr)) # https://scikit-learn.org/stable/auto_examples/model_selection/plot_roc.html
                     rocaucs.append(roc_auc_score(y_label[:,i],y_pred[:,i])) # https://scikit-learn.org/stable/modules/generated/sklearn.metrics.roc_auc_score.html#sklearn.metrics.roc_auc_score
-                    tprs.append(interp(mean_fpr, fpr, tpr))
+                    tprs.append(np.interp(mean_fpr, fpr, tpr))
                     tprs[-1][0] = 0.0
                 else:
                     # A "micro-average": quantifying score on all classes jointly
@@ -186,7 +188,7 @@ def makeAUROCPlot(ckpt_name='./checkpoints/TCGA_GBMLGG/grad_15/', model_list=['p
                     fpr, tpr, thresh = roc_curve(y_label.ravel(), y_pred.ravel())
                     aucrocs.append(auc(fpr, tpr))
                     rocaucs.append(roc_auc_score(y_label, y_pred, avg))
-                    tprs.append(interp(mean_fpr, fpr, tpr))
+                    tprs.append(np.interp(mean_fpr, fpr, tpr))
                     tprs[-1][0] = 0.0
 
             mean_tpr = np.mean(tprs, axis=0)
