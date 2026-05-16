@@ -1,22 +1,7 @@
-# Data and Thesis guides
+guide_for_thesis/
 data/
-Guide_for_thesis/
-
-# Python common
+*.pyc
 __pycache__/
-*.py[cod]
-*$py.class
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Jupyter Notebooks
-.ipynb_checkpoints
-
-# OS generated files
-.DS_Store
-Thumbs.db
+.ipynb_checkpoints/
+.vscode/
+.idea/
